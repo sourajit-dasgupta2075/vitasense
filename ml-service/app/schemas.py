@@ -1,16 +1,19 @@
+from dataclasses import dataclass
 from datetime import datetime
-from pydantic import BaseModel
+from typing import List, Optional
 
 
-class Reading(BaseModel):
+@dataclass
+class Reading:
     timestamp: datetime
     heartRate: float
     spo2: float
     temperature: float
     motion: float
-    status: str | None = "normal"
-    healthScore: float | None = 0
+    status: Optional[str] = "normal"
+    healthScore: Optional[float] = 0
 
 
-class PredictionRequest(BaseModel):
-    readings: list[Reading]
+@dataclass
+class PredictionRequest:
+    readings: List[Reading]

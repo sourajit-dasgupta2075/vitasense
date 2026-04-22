@@ -9,11 +9,20 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_URL
-        sync: false
+        fromService:
+          name: vitasense-client
+          type: static_site
+          property: url
       - key: CLIENT_URLS
-        sync: false
+        fromService:
+          name: vitasense-client
+          type: static_site
+          property: url
       - key: ML_SERVICE_URL
-        sync: false
+        fromService:
+          name: vitasense-ml-service
+          type: web_service
+          property: url
       - key: FIREBASE_PROJECT_ID
         sync: false
       - key: FIREBASE_CLIENT_EMAIL
@@ -44,6 +53,11 @@ services:
     envVars:
       - key: MODEL_STORE
         value: ./model_store
+      - key: SERVER_URL
+        fromService:
+          name: vitasense-server
+          type: web_service
+          property: url
 
   - type: web
     name: vitasense-client
@@ -53,6 +67,12 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        sync: false
+        fromService:
+          name: vitasense-server
+          type: web_service
+          property: url
       - key: VITE_ML_URL
-        sync: false
+        fromService:
+          name: vitasense-ml-service
+          type: web_service
+          property: url
