@@ -8,11 +8,26 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 const app = express();
 
-app.use(cors({ origin: env.clientUrl }));
+const allowedOrigins = Array.from(new Set([env.clientUrl, ...env.clientUrls].filter(Boolean)));
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    }
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "vitasense-server" });
+});
+
+app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "vitasense-server" });
 });
 

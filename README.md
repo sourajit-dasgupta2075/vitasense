@@ -131,6 +131,34 @@ Update constants in `firmware/src/main.cpp`:
 
 Then build/upload using PlatformIO.
 
+## Deploy on Render
+
+This repo includes `render.yaml` so you can use Render Blueprint deploy.
+
+1. In Render, choose **New +** -> **Blueprint**.
+2. Connect this GitHub repository.
+3. Render will detect `render.yaml` and create:
+   - `vitasense-server` (Node backend)
+   - `vitasense-ml-service` (FastAPI ML service)
+   - `vitasense-client` (Vite static frontend)
+4. Fill all `sync: false` environment variables in Render dashboard.
+
+Important Render environment values:
+
+- `NODE_ENV=production`
+- `PORT=10000` (Render also injects this automatically, but setting it is safe)
+- `CLIENT_URL=https://<your-frontend-domain>`
+- `CLIENT_URLS=https://<your-frontend-domain>,https://<other-allowed-domain>`
+- `ML_SERVICE_URL=https://<your-ml-service-domain>`
+
+After deploy, set frontend env in `client`:
+
+```env
+VITE_API_URL=https://<your-render-backend>.onrender.com/api
+```
+
+If `client` is on Render, set `VITE_API_URL` and `VITE_ML_URL` in the `vitasense-client` service env vars, then redeploy frontend.
+
 ## Environment examples
 
 ### `client/.env.example`

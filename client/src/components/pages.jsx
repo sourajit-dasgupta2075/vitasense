@@ -483,6 +483,10 @@ export function EmergencyPage() {
 }
 
 export function SettingsPage({ range }) {
+  const frontendUrl = window.location.origin;
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+  const mlUrl = import.meta.env.VITE_ML_URL || "http://127.0.0.1:8000";
+
   return (
     <section className="space-y-6">
       <ShellHeader title="Settings" subtitle="Runtime, service, and environment overview." badge="System ready" />
@@ -497,9 +501,9 @@ export function SettingsPage({ range }) {
         </Panel>
         <Panel title="Endpoints" subtitle="Local development URLs">
           <div className="grid gap-4">
-            <SoftInfo label="Frontend URL" value="http://localhost:5173" />
-            <SoftInfo label="API URL" value="http://localhost:4000/api" />
-            <SoftInfo label="ML URL" value="http://127.0.0.1:8000" />
+            <SoftInfo label="Frontend URL" value={frontendUrl} />
+            <SoftInfo label="API URL" value={apiUrl} />
+            <SoftInfo label="ML URL" value={mlUrl} />
             <SoftInfo label="Current range" value={range} />
           </div>
         </Panel>

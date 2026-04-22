@@ -92,6 +92,16 @@ export async function checkBackendHealth() {
     const { data } = await api.get("/health", { timeout: 5000 });
     return data.ok === true;
   } catch (error) {
+    // Fallback for deployments that expose health outside the /api prefix.
+    if (api.defaults.baseURL?.endsWith("/api")) {
+      try {
+        const fallbackBaseUrl = api.defaults.baseURL.slice(0, -4);
+        const { data } = await axios.get(`${fallbackBaseUrl}/health`, { timeout: 5000 });
+        return data.ok === true;
+      } catch {
+        // Ignore fallback error and return false below.
+      }
+    }
     console.error("Backend health check failed:", error.message);
     return false;
   }
