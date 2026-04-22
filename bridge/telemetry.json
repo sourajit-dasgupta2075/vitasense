@@ -1,0 +1,22 @@
+{
+  "device": {
+    "connected": true,
+    "board": "ESP32 Dev Module",
+    "sensors": ["MAX30102", "DS18B20", "MPU6050"],
+    "updatedAt": "2026-04-21T11:22:01"
+  },
+  "metrics": {
+    "heartRate": { "value": 91, "status": "Tracked", "state": "normal" },
+    "spo2": { "value": 97, "status": "Normal", "state": "normal" },
+    "temperature": { "value": "--", "status": "No Data", "state": "warning" },
+    "stress": { "value": 49, "status": "Moderate", "state": "normal" },
+    "hydration": { "value": 100, "status": "Adequate", "state": "normal" },
+    "perfusionIndex": { "value": 7.14, "status": "Tracked", "state": "normal" },
+    "respiratoryRate": { "value": 13, "status": "Tracked", "state": "normal" },
+    "movement": { "value": "0.00", "status": "Minimal", "state": "normal" },
+    "shockIndex": { "value": 0.72, "status": "Stable", "state": "normal" },
+    "fallRisk": { "value": 2, "status": "Low", "state": "normal" },
+    "signalQuality": { "value": 94, "status": "Strong", "state": "normal" },
+    "deviceUptime": { "value": 41, "status": "Streaming", "state": "normal" }
+  }
+}

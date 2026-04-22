@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VitaSense</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="/logo.svg" alt="VitaSense logo" />
+          <div>
+            <strong>VitaSense</strong>
+            <span>Whole-body wellness OS</span>
+          </div>
+        </div>
+        <nav class="nav" id="nav"></nav>
+        <button class="ghost-button" id="logoutButton" hidden>Log out</button>
+      </aside>
+
+      <main class="main">
+        <section class="hero" id="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Rebuilt from scratch</p>
+            <h1>Track your health story in one calm, intelligent workspace.</h1>
+            <p>
+              VitaSense brings together biometric trends, symptoms, medications,
+              appointments, reminders, goals, and journal insights so care feels
+              connected instead of scattered.
+            </p>
+            <div class="hero-actions">
+              <button class="primary-button" data-screen="auth">Get Started</button>
+              <button class="secondary-button" data-screen="dashboard">View Demo</button>
+            </div>
+          </div>
+          <div class="hero-panel">
+            <div class="metric-pill">
+              <span>Recovery Score</span>
+              <strong>84%</strong>
+            </div>
+            <div class="hero-grid">
+              <article>
+                <span>Sleep</span>
+                <strong>7.1h</strong>
+              </article>
+              <article>
+                <span>Hydration</span>
+                <strong>2.2L</strong>
+              </article>
+              <article>
+                <span>Focus</span>
+                <strong>High</strong>
+              </article>
+              <article>
+                <span>Next Visit</span>
+                <strong>3 days</strong>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen auth-screen active" id="screen-auth">
+          <div class="auth-card">
+            <div class="auth-header">
+              <p class="eyebrow">Access VitaSense</p>
+              <h2>Sign in or create an account</h2>
+              <p>Demo login: <code>demo@vitasense.app</code> / <code>demo1234</code></p>
+            </div>
+            <div class="auth-toggle">
+              <button class="tab-button active" data-auth-mode="login">Login</button>
+              <button class="tab-button" data-auth-mode="register">Register</button>
+            </div>
+            <form id="authForm" class="panel form-grid">
+              <label id="nameField" class="hidden">
+                <span>Name</span>
+                <input name="name" placeholder="Ava Morgan" />
+              </label>
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" placeholder="you@example.com" required />
+              </label>
+              <label>
+                <span>Password</span>
+                <input name="password" type="password" placeholder="••••••••" required />
+              </label>
+              <button class="primary-button" type="submit">Continue</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-dashboard">
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2 id="welcomeTitle">Your health cockpit</h2>
+            </div>
+            <div class="section-actions">
+              <button class="secondary-button" id="refreshButton">Refresh</button>
+            </div>
+          </header>
+          <div class="stats-grid" id="overviewCards"></div>
+          <div class="dashboard-layout">
+            <article class="panel chart-panel">
+              <div class="panel-head">
+                <h3>7-day wellness trend</h3>
+                <span>Sleep, mood, hydration</span>
+              </div>
+              <canvas id="trendChart" width="720" height="280"></canvas>
+            </article>
+            <article class="panel insights-panel">
+              <div class="panel-head">
+                <h3>Smart insights</h3>
+                <span>Generated from recent entries</span>
+              </div>
+              <div id="insightList" class="insight-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-metrics">
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Biometrics</p>
+              <h2>Track daily vitals and habits</h2>
+            </div>
+          </header>
+          <div class="two-column">
+            <form id="metricForm" class="panel form-grid"></form>
+            <div class="panel list-panel">
+              <div class="panel-head">
+                <h3>Recent metric logs</h3>
+                <span>Latest entries first</span>
+              </div>
+              <div id="metricList" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-care">
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Care Planner</p>
+              <h2>Symptoms, medications, appointments, reminders</h2>
+            </div>
+          </header>
+          <div class="care-grid">
+            <div class="panel">
+              <div class="panel-head"><h3>Symptoms</h3><span>Log what you feel</span></div>
+              <form id="symptomForm" class="form-grid compact-form"></form>
+              <div id="symptomList" class="list"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Medications</h3><span>Keep treatments visible</span></div>
+              <form id="medicationForm" class="form-grid compact-form"></form>
+              <div id="medicationList" class="list"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Appointments</h3><span>Stay ahead of visits</span></div>
+              <form id="appointmentForm" class="form-grid compact-form"></form>
+              <div id="appointmentList" class="list"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Reminders</h3><span>Routines that stick</span></div>
+              <form id="reminderForm" class="form-grid compact-form"></form>
+              <div id="reminderList" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-reflect">
+          <header class="section-header">
+            <div>
+              <p class="eyebrow">Progress + Reflection</p>
+              <h2>Goals, notes, and the story behind the numbers</h2>
+            </div>
+          </header>
+          <div class="two-column">
+            <div class="column-stack">
+              <div class="panel">
+                <div class="panel-head"><h3>Goals</h3><span>Small targets, real momentum</span></div>
+                <form id="goalForm" class="form-grid compact-form"></form>
+                <div id="goalList" class="list"></div>
+              </div>
+              <div class="panel">
+                <div class="panel-head"><h3>Profile</h3><span>Personal health context</span></div>
+                <form id="profileForm" class="form-grid compact-form"></form>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h3>Journal</h3><span>Capture gratitude and reflection</span></div>
+              <form id="journalForm" class="form-grid compact-form"></form>
+              <div id="journalList" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="toast" id="toast"></div>
+      </main>
+    </div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --shell: #edf4f8;
+    --ink: #16335e;
+    --muted: #6880a1;
+    --accent: #6ef0f8;
+    --accent-2: #75e28d;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-family: "Trebuchet MS", "Segoe UI Variable", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, rgba(60, 195, 230, 0.12), transparent 28%),
+      radial-gradient(circle at top right, rgba(102, 225, 156, 0.12), transparent 22%),
+      linear-gradient(180deg, #eff6f8 0%, #e8f1f7 46%, #edf3f9 100%);
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+body {
+  font-family: "Trebuchet MS", "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+.grid-shell {
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(52, 211, 153, 0.12), transparent 20%),
+    linear-gradient(180deg, #07122e 0%, #0b1538 60%, #0c173d 100%);
+}
+
+.aurora-bg {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(110, 240, 248, 0.22), transparent 25%),
+    radial-gradient(circle at 82% 18%, rgba(117, 226, 141, 0.22), transparent 20%),
+    radial-gradient(circle at 70% 78%, rgba(35, 110, 255, 0.14), transparent 18%),
+    linear-gradient(180deg, #081933 0%, #102b59 50%, #102449 100%);
+}
+
+.glass-panel {
+  backdrop-filter: blur(22px);
+}
+
+.shadow-soft {
+  box-shadow: 0 18px 50px rgba(27, 55, 114, 0.09);
+}
