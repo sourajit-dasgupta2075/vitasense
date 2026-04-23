@@ -25,7 +25,7 @@ const chartTooltipStyle = {
   borderRadius: 20
 };
 
-export function LandingPage({ latest, onNavigate, isDemoMode }) {
+export function LandingPage({ latest, onNavigate, onLogin, isDemoMode }) {
   return (
     <div className="relative min-h-screen overflow-hidden px-6 py-8 text-white md:px-10">
       <div className="aurora-bg absolute inset-0" />
@@ -42,7 +42,7 @@ export function LandingPage({ latest, onNavigate, isDemoMode }) {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <StatusBanner label={isDemoMode ? "Preview mode" : "Device linked"} detail={isDemoMode ? "Backend unavailable" : "Live dashboard ready"} tone={isDemoMode ? "warning" : "info"} />
-            <button className="rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white">
+            <button onClick={onLogin} className="rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white">
               Login
             </button>
             <button onClick={() => onNavigate("Doctor Connect")} className="rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0f2956] transition hover:translate-y-[-1px]">
