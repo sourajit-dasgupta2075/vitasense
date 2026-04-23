@@ -1,49 +1,69 @@
 import axios from "axios";
 
+const AUTH_TOKEN_KEY = "vitasense.auth.token";
+
+export function getStoredAuthToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+}
+
+export function setStoredAuthToken(token) {
+  if (typeof window === "undefined") return;
+  if (token) {
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } else {
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
-  timeout: 15000, // Increased from 6000ms to 15000ms
+  timeout: 15000,
   headers: {
-    'Connection': 'keep-alive'
+    Connection: "keep-alive"
   }
 });
 
-// Add request interceptor for retry logic
 api.interceptors.request.use((config) => {
-  // Add timestamp to prevent caching
+  const token = getStoredAuthToken();
+
   config.params = {
     ...config.params,
     _t: Date.now()
   };
+
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`
+    };
+  }
+
   return config;
 });
 
-// Add response interceptor for retry logic
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error.config;
 
     if (!config || !config.retry) {
-      config.retry = 3; // Retry up to 3 times
-      config.retryDelay = 1000; // Start with 1 second delay
+      config.retry = 3;
+      config.retryDelay = 1000;
     }
 
     if (config.retry > 0 && (
-      error.code === 'ECONNABORTED' || // Timeout
-      error.code === 'ENOTFOUND' || // DNS/Network error
-      error.code === 'ECONNREFUSED' || // Connection refused
-      (error.response && error.response.status >= 500) // Server errors
+      error.code === "ECONNABORTED" ||
+      error.code === "ENOTFOUND" ||
+      error.code === "ECONNREFUSED" ||
+      (error.response && error.response.status >= 500)
     )) {
       config.retry--;
 
-      // Exponential backoff
       const delay = config.retryDelay * Math.pow(2, 3 - config.retry);
       console.log(`Retrying request in ${delay}ms... (${config.retry} attempts left)`);
 
-      await new Promise(resolve => setTimeout(resolve, delay));
-
-      // Double the delay for next retry
+      await new Promise((resolve) => setTimeout(resolve, delay));
       config.retryDelay *= 2;
 
       return api(config);
@@ -86,24 +106,52 @@ export async function postCameraPredict(payload) {
   return data;
 }
 
-// Health check function
 export async function checkBackendHealth() {
   try {
     const { data } = await api.get("/health", { timeout: 5000 });
     return data.ok === true;
   } catch (error) {
-    // Fallback for deployments that expose health outside the /api prefix.
     if (api.defaults.baseURL?.endsWith("/api")) {
       try {
         const fallbackBaseUrl = api.defaults.baseURL.slice(0, -4);
         const { data } = await axios.get(`${fallbackBaseUrl}/health`, { timeout: 5000 });
         return data.ok === true;
       } catch {
-        // Ignore fallback error and return false below.
+        // Ignore fallback error.
       }
     }
     console.error("Backend health check failed:", error.message);
     return false;
+  }
+}
+
+export async function registerUser(payload) {
+  const { data } = await api.post("/auth/register", payload);
+  if (data.token) {
+    setStoredAuthToken(data.token);
+  }
+  return data;
+}
+
+export async function loginUser(payload) {
+  const { data } = await api.post("/auth/login", payload);
+  if (data.token) {
+    setStoredAuthToken(data.token);
+  }
+  return data;
+}
+
+export async function fetchCurrentUser() {
+  const { data } = await api.get("/auth/me");
+  return data;
+}
+
+export async function logoutUser() {
+  try {
+    const { data } = await api.post("/auth/logout");
+    return data;
+  } finally {
+    setStoredAuthToken("");
   }
 }
 

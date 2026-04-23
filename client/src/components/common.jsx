@@ -1,6 +1,6 @@
 import { AlertTriangle, Heart, LogOut } from "lucide-react";
 
-export function AppSidebar({ activePage, navItems, onNavigate }) {
+export function AppSidebar({ activePage, navItems, onNavigate, currentUser, onLogout }) {
   return (
     <aside className="glass-panel flex min-h-full flex-col border border-white/55 bg-[rgba(14,33,71,0.92)] text-white shadow-[0_30px_80px_rgba(10,24,57,0.45)]">
       <div className="flex items-center gap-4 border-b border-white/10 px-6 py-7">
@@ -32,7 +32,17 @@ export function AppSidebar({ activePage, navItems, onNavigate }) {
       </nav>
 
       <div className="border-t border-white/10 px-4 py-5">
-        <button className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-white/72 transition hover:bg-white/6 hover:text-white">
+        {currentUser ? (
+          <div className="mb-4 rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/45">Signed in</p>
+            <p className="mt-2 truncate text-sm font-semibold text-white">{currentUser.name}</p>
+            <p className="mt-1 truncate text-xs text-white/58">{currentUser.email}</p>
+          </div>
+        ) : null}
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center gap-4 rounded-2xl px-4 py-4 text-left text-white/72 transition hover:bg-white/6 hover:text-white"
+        >
           <LogOut className="h-5 w-5" />
           Logout
         </button>
