@@ -484,8 +484,9 @@ export function EmergencyPage() {
 
 export function SettingsPage({ range }) {
   const frontendUrl = window.location.origin;
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
-  const mlUrl = import.meta.env.VITE_ML_URL || "http://127.0.0.1:8000";
+  const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const apiUrl = rawApiUrl.replace(/\/+$/, "").endsWith("/api") ? rawApiUrl.replace(/\/+$/, "") : `${rawApiUrl.replace(/\/+$/, "")}/api`;
+  const mlUrl = import.meta.env.VITE_ML_URL?.replace(/\/+$/, "") || "http://127.0.0.1:8000";
 
   return (
     <section className="space-y-6">

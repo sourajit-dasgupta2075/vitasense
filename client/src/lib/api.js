@@ -16,8 +16,12 @@ export function setStoredAuthToken(token) {
   }
 }
 
+const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const normalizedApiUrl = rawApiUrl.replace(/\/+$/, "");
+const baseUrl = normalizedApiUrl.endsWith("/api") ? normalizedApiUrl : `${normalizedApiUrl}/api`;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
+  baseURL: baseUrl,
   timeout: 15000,
   headers: {
     Connection: "keep-alive"
