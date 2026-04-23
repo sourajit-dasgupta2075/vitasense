@@ -85,6 +85,11 @@ export async function fetchDashboardSnapshot(range = "1h", signal) {
   return data;
 }
 
+export async function postNearbyHospitals(payload) {
+  const { data } = await api.post("/nearby-hospitals", payload);
+  return data;
+}
+
 export async function fetchLatest() {
   const { data } = await api.get("/data");
   return data;

@@ -499,29 +499,65 @@ export function CameraModePage() {
 }
 
 export function AnalyticsPage({ snapshot }) {
+  const predictionSummary = useMemo(() => {
+    const values = Array.isArray(snapshot.predictions.forecast)
+      ? snapshot.predictions.forecast
+          .map((item) => Number(item.heartRate))
+          .filter((value) => Number.isFinite(value))
+      : [];
+
+    return {
+      horizon: snapshot.predictions.forecast.length ? `${snapshot.predictions.forecast.length * 5} min` : "N/A",
+      peak: values.length ? Math.round(Math.max(...values)) : 0,
+      average: values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0
+    };
+  }, [snapshot.predictions.forecast]);
+
+  const trendSeries = useMemo(() => {
+    const recentActual = snapshot.history.items.slice(-6).map((item) => ({
+      label: formatTime(item.timestamp),
+      actual: item.heartRate
+    }));
+
+    const forecastPoints = snapshot.predictions.forecast.map((item) => ({
+      label: item.step,
+      forecast: item.heartRate
+    }));
+
+    return [...recentActual, ...forecastPoints];
+  }, [snapshot.history.items, snapshot.predictions.forecast]);
+
   return (
     <section className="space-y-6">
       <ShellHeader title="Analytics" subtitle="Prediction, correlation, and escalation cues in one place." badge="AI active" />
-      <div className="grid gap-6 xl:grid-cols-[1.2fr,1fr]">
-        <Panel title="Predictive heart rate trend" subtitle="Near-future forecast generated from recent readings.">
-          {snapshot.predictions.forecast.length ? (
-            <div className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={snapshot.predictions.forecast}>
-                  <defs>
-                    <linearGradient id="forecastFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#12d7ee" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#12d7ee" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="#e4edf9" strokeDasharray="3 3" />
-                  <XAxis dataKey="step" stroke="#8ca0c4" />
-                  <YAxis stroke="#8ca0c4" />
-                  <Tooltip contentStyle={chartTooltipStyle} />
-                  <Area type="monotone" dataKey="heartRate" stroke="#12d7ee" fill="url(#forecastFill)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+      <div className="grid gap-6 xl:grid-cols-[1.25fr,0.95fr]">
+        <Panel title="Predictive heart rate trend" subtitle="History and short-horizon forecast shown together.">
+          {trendSeries.length ? (
+            <>
+              <div className="grid gap-3 sm:grid-cols-3 mb-4">
+                <SoftInfo label="Forecast horizon" value={predictionSummary.horizon} />
+                <SoftInfo label="Forecast peak" value={predictionSummary.peak ? `${predictionSummary.peak} BPM` : "N/A"} />
+                <SoftInfo label="Forecast average" value={predictionSummary.average ? `${predictionSummary.average} BPM` : "N/A"} />
+              </div>
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendSeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.04} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="#e4edf9" strokeDasharray="3 3" />
+                    <XAxis dataKey="label" stroke="#8ca0c4" />
+                    <YAxis stroke="#8ca0c4" />
+                    <Tooltip contentStyle={chartTooltipStyle} formatter={(value) => [`${value} BPM`, "Heart rate"]} />
+                    <Line type="monotone" dataKey="actual" stroke="#0ea5e9" strokeWidth={3} dot={false} name="Actual" />
+                    <Line type="monotone" dataKey="forecast" stroke="#f59e0b" strokeWidth={3} dot={false} strokeDasharray="6 6" name="Forecast" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </>
           ) : (
             <EmptyState title="Prediction unavailable" description="The forecasting service needs a few readings before it can model the next interval." compact />
           )}
@@ -529,13 +565,13 @@ export function AnalyticsPage({ snapshot }) {
 
         <Panel title="Motion vs heart rate" subtitle="Activity correlation overview.">
           {snapshot.history.items.length ? (
-            <div className="h-[320px]">
+            <div className="h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart>
                   <CartesianGrid stroke="#e4edf9" />
-                  <XAxis type="number" dataKey="motion" stroke="#8ca0c4" />
-                  <YAxis type="number" dataKey="heartRate" stroke="#8ca0c4" />
-                  <Tooltip contentStyle={chartTooltipStyle} />
+                  <XAxis type="number" dataKey="motion" stroke="#8ca0c4" name="Motion" />
+                  <YAxis type="number" dataKey="heartRate" stroke="#8ca0c4" name="Heart rate" />
+                  <Tooltip contentStyle={chartTooltipStyle} formatter={(value, name) => [`${value}`, name]} />
                   <Scatter data={snapshot.history.items} fill="#19cdef" />
                 </ScatterChart>
               </ResponsiveContainer>
