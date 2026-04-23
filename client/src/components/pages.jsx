@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Activity, AlertTriangle, Filter, Heart, Search, Waves } from "lucide-react";
+import { Activity, AlertTriangle, Filter, Heart, Search, Waves, MapPin, Navigation, Info } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import { postNearbyHospitals } from "../lib/api";
 import { chartRanges, doctorPatients, doctorStats, emergencyActions, getDashboardCards } from "../constants/app";
 import { clampPercent, formatDateTime, formatRiskPercent, formatStatus, formatTime } from "../utils/formatters";
 import { DoctorStatCard, EmergencyAction, EmptyState, MetricCard, MiniPatientStat, Panel, ShellHeader, SoftInfo, StatusBanner, riskBadge } from "./common";
@@ -104,6 +105,136 @@ export function LandingPage({ latest, onNavigate, onLogin, isDemoMode }) {
 export function DashboardPage({ snapshot, range, onRangeChange, connectionLabel, isLoading }) {
   const dashboardCards = useMemo(() => getDashboardCards(snapshot.latest), [snapshot.latest]);
 
+  // --- Location & Care Integration ---
+  const [hospitals, setHospitals] = useState([]);
+  const [locStatus, setLocStatus] = useState("idle"); // idle, loading, success, error
+  const [locError, setLocError] = useState("");
+  const [userLocation, setUserLocation] = useState(null);
+  const [manualLocation, setManualLocation] = useState({ lat: "", lng: "" });
+  const [locFeedSource, setLocFeedSource] = useState("auto");
+
+  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const getMapEmbedUrl = (location) => {
+    if (!location || !googleMapsApiKey) return "";
+    return `https://www.google.com/maps/embed/v1/search?key=${googleMapsApiKey}&q=hospital&center=${location.lat},${location.lng}&zoom=13`;
+  };
+
+  const fetchNearbyHospitals = async (lat, lng, source = "auto") => {
+    setLocStatus("loading");
+    setLocError("");
+
+    try {
+      const result = await postNearbyHospitals({ lat, lng });
+      const nearby = result?.data || result || [];
+
+      setHospitals(Array.isArray(nearby) ? nearby : []);
+      setUserLocation({ lat, lng });
+      setLocFeedSource(source);
+      setLocStatus("success");
+    } catch (err) {
+      const message = err?.response?.data?.message || err?.message || "Unable to reach healthcare directory.";
+      setHospitals([]);
+      setUserLocation(null);
+      setLocError(message);
+      setLocStatus("error");
+    }
+  };
+
+  const requestLocation = () => {
+    if (!("geolocation" in navigator)) {
+      setLocError("Geolocation not supported by this browser.");
+      setLocStatus("error");
+      return;
+    }
+
+    setLocStatus("loading");
+    setLocError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetchNearbyHospitals(pos.coords.latitude, pos.coords.longitude, "auto");
+      },
+      (err) => {
+        const msg = err.code === 1 ? "Location permission denied." : err.code === 3 ? "Location request timed out." : "Unable to retrieve location.";
+        setLocError(msg);
+        setLocStatus("error");
+      },
+      { timeout: 10000 }
+    );
+  };
+
+  const handleManualSearch = async (event) => {
+    event.preventDefault();
+    const lat = Number(manualLocation.lat);
+    const lng = Number(manualLocation.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setLocError("Please enter valid latitude and longitude values.");
+      setLocStatus("error");
+      return;
+    }
+
+    await fetchNearbyHospitals(lat, lng, "manual");
+  };
+
+  const recommendation = useMemo(() => {
+    const { latest, predictions } = snapshot;
+    if (!latest) return null;
+
+    const anomalyScore = Number(predictions?.anomalyProbability ?? 0);
+    const healthScore = Number(latest.healthScore ?? 0);
+    const hasCriticalSpO2 = latest.spo2 < 90;
+    const hasDangerousHeartRate = latest.heartRate > 120 || latest.heartRate < 45;
+
+    if (hasCriticalSpO2) {
+      return {
+        title: "Critical: Immediate care needed",
+        text: "Oxygen saturation is dangerously low. Visit a nearby hospital immediately or call emergency services.",
+        tone: "red",
+        icon: AlertTriangle
+      };
+    }
+
+    if (hasDangerousHeartRate) {
+      return {
+        title: "Urgent heart review",
+        text: "Heart rate is outside safe range. Pause activity, hydrate, and contact medical support if symptoms continue.",
+        tone: "red",
+        icon: Heart
+      };
+    }
+
+    if (anomalyScore >= 0.65) {
+      return {
+        title: "Potential anomaly detected",
+        text: "The ML risk model indicates an elevated anomaly probability. Schedule a medical check-up near you.",
+        tone: "warning",
+        icon: Activity
+      };
+    }
+
+    if (healthScore && healthScore < 60) {
+      return {
+        title: "Elevated risk posture",
+        text: "Your combined vitals and model score show increased risk. Follow up with a clinician if symptoms persist.",
+        tone: "warning",
+        icon: Info
+      };
+    }
+
+    return {
+      title: "Vitals stable",
+      text: "Live vitals are within a healthy range and no immediate action is required. Keep monitoring regularly.",
+      tone: "info",
+      icon: Info
+    };
+  }, [snapshot]);
+
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
   return (
     <section className="space-y-6">
       <ShellHeader
@@ -131,6 +262,114 @@ export function DashboardPage({ snapshot, range, onRangeChange, connectionLabel,
             <MetricCard card={card} />
           </motion.div>
         ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr,1.3fr]">
+        <Panel title="Health Recommendation" subtitle="Automated triage based on live vitals and ML risk patterns.">
+          {recommendation && (
+            <div className={`rounded-3xl border p-6 transition-all ${
+              recommendation.tone === 'red' ? 'bg-red-50/50 border-red-200' : 
+              recommendation.tone === 'warning' ? 'bg-amber-50/50 border-amber-200' : 'bg-blue-50/50 border-blue-200'
+            }`}>
+              <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-2xl ${
+                  recommendation.tone === 'red' ? 'bg-red-500 text-white' : 
+                  recommendation.tone === 'warning' ? 'bg-amber-500 text-white' : 'bg-blue-500 text-white'
+                }`}>
+                  <recommendation.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-[var(--ink)]">{recommendation.title}</h4>
+                  <p className="mt-2 leading-relaxed text-[var(--muted)]">{recommendation.text}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </Panel>
+
+        <Panel 
+          title="Nearby Care" 
+          subtitle="Instant lookup of medical facilities based on your current location."
+          actions={
+            <button onClick={requestLocation} className="text-xs font-bold uppercase tracking-wider text-[var(--accent)] hover:underline">
+              Refresh Location
+            </button>
+          }
+        >
+          {locStatus === "loading" ? (
+            <div className="py-10 text-center animate-pulse text-[var(--muted)]">Scanning for nearby clinics...</div>
+          ) : locStatus === "error" ? (
+            <div className="space-y-4">
+              <EmptyState title="Location Unavailable" description={locError} compact />
+              <form onSubmit={handleManualSearch} className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-[var(--ink)]">Manually enter coordinates to continue</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                    Latitude
+                    <input
+                      type="text"
+                      value={manualLocation.lat}
+                      onChange={(event) => setManualLocation((prev) => ({ ...prev, lat: event.target.value }))}
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="e.g. 37.7749"
+                    />
+                  </label>
+                  <label className="block text-xs uppercase tracking-[0.2em] text-[var(--muted)]">
+                    Longitude
+                    <input
+                      type="text"
+                      value={manualLocation.lng}
+                      onChange={(event) => setManualLocation((prev) => ({ ...prev, lng: event.target.value }))}
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+                      placeholder="e.g. -122.4194"
+                    />
+                  </label>
+                </div>
+                <button type="submit" className="mt-3 inline-flex items-center justify-center rounded-full bg-[var(--accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[#07203f] transition hover:opacity-90">
+                  Search Nearby Hospitals
+                </button>
+              </form>
+            </div>
+          ) : hospitals.length === 0 ? (
+            <EmptyState title="No nearby hospitals found" description="We couldn't find hospitals close to your current location. Try a wider search or adjust your coordinates." compact />
+          ) : (
+            <>
+              {userLocation && hospitals.length && googleMapsApiKey ? (
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                  <iframe
+                    title="Nearby healthcare map"
+                    src={getMapEmbedUrl(userLocation)}
+                    className="h-48 w-full border-0"
+                    loading="lazy"
+                  />
+                </div>
+              ) : null}
+
+              {userLocation ? (
+                <div className="mb-4 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-[var(--muted)]">
+                  Showing hospitals around {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)} using {locFeedSource === "manual" ? "manual coordinates" : "device location"}.
+                </div>
+              ) : null}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {hospitals.slice(0, 4).map((h) => (
+                  <div key={h.id} className="flex flex-col justify-between rounded-2xl border border-[#e4edf9] bg-white p-4 shadow-sm hover:border-[var(--accent)] transition-colors">
+                    <div>
+                      <h5 className="font-bold text-[var(--ink)] line-clamp-1">{h.name}</h5>
+                      <p className="text-xs text-[var(--muted)] mt-1 line-clamp-2">{h.address}</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-3">
+                      <span className="text-xs font-semibold text-[var(--ink)]">{h.distanceLabel}</span>
+                      <a href={h.mapUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-black text-[var(--accent)]">
+                        NAVIGATE <Navigation className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </Panel>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.45fr,0.85fr]">
