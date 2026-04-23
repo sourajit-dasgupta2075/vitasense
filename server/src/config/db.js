@@ -5,6 +5,21 @@ import { env } from "./env.js";
 let initialized = false;
 export let db;
 
+function normalizePrivateKey(rawKey) {
+  if (!rawKey) return "";
+
+  let normalized = rawKey.trim();
+
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
+    normalized = normalized.slice(1, -1);
+  }
+
+  return normalized.replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
+}
+
 function buildCredential() {
   if (env.firebaseServiceAccountPath && fs.existsSync(env.firebaseServiceAccountPath)) {
     const serviceAccount = JSON.parse(fs.readFileSync(env.firebaseServiceAccountPath, "utf-8"));
@@ -15,7 +30,7 @@ function buildCredential() {
     return admin.credential.cert({
       projectId: env.firebaseProjectId,
       clientEmail: env.firebaseClientEmail,
-      privateKey: env.firebasePrivateKey.replace(/\\n/g, "\n")
+      privateKey: normalizePrivateKey(env.firebasePrivateKey)
     });
   }
 
