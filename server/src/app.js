@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import routes from "./routes/dataRoutes.js";
 import cameraRoutes from "./routes/camera.js";
+import authRoutes from "./routes/auth.js";
 import { env } from "./config/env.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
@@ -33,6 +34,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api", routes);
 app.use("/api", cameraRoutes);
+app.use("/api", authRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
